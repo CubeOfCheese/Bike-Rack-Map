@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <style>
+      #map {
+        width: 100%;
+        height: 400px;
+        background-color: grey;
+      }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/5.3.0/firebase.js"></script>
+  </head>
+  <body>
+    <h1>Bike Rack Map</h1>
+    <div id="map"></div>
+    <input type="checkbox" name="bike paths" id="bike-paths" value="on" checked>
+      <label for="bike-paths">Bike Paths</label>
+    <input type="checkbox" name="light rail" id="light-rail" value="on" checked>
+      <label for="light-rail">Light Rail</label>
+
+    <div>
+      <h4>Legend</h4>
+      
+    </div>
+       <!-- Replace the value of the key parameter with your own API key. -->
+    <script type="text/javascript" src="firebasemap.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBfWCu4KWIiCCSpB_3wADpGvJ9oTUUll-I&libraries=visualization&callback=initMap" async defer></script>
+  </body>
+</html>
