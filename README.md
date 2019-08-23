@@ -9,7 +9,7 @@ Things to do:
 5. Add donation jar
 6. Add about me (Billy T.) and contact me
 7. Prettify with help from Maya <Due Wednesday>
-8. Publish on Heroku? <Due Thursday>
+<!-- 8. Publish on Heroku? <Due Thursday> -->
 9. Send link to SABA, City, gettingaroundsac blog, facebook groups, Sac State, Sac City College map page
 (916) 278-6242
 sustainability@csus.edu

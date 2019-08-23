@@ -48,9 +48,9 @@ lightRailCheckBox.onchange = function() {
 
 function deleteMarker() {
 
-  var latList = document.getElementsByClassName('marker-lat')
+  var latList = document.getElementsByClassName('marker-lat');
   var lat = latList[latList.length-1].innerHTML.substring(4);
-  var lngList = document.getElementsByClassName('marker-lng')
+  var lngList = document.getElementsByClassName('marker-lng');
   var lng = lngList[lngList.length-1].innerHTML.substring(4);
 
   console.log(lat+lng);
@@ -63,7 +63,7 @@ function deleteMarker() {
     // Remove old data from the heatmap when a point is removed from firebase.
 
   });
-  clicks.on('child_removed', function(snapshot, prevChildKey) {
+  clicks.once('child_removed', function(snapshot, prevChildKey) {
     console.log("child removed");
     var markersData = markers;
     var i = 0;
@@ -78,15 +78,68 @@ function deleteMarker() {
     markers.splice(i, 1);
     console.log(markers);
   });
+}
 
-  // .on('child_added', function(snapshot) {
-  //   console.log(snapshot);
-  //   // snapshot.remove();
-  // });
+function submitCapacity() {
+  console.log(markers);
+  var radios = document.getElementsByName('capacity');
+  var last_click;
+  firebase.database().ref('clicks').orderByChild('timestamp').limitToLast(1).once('child_added', function(snapshot) {
+    console.log(snapshot.key);
+    last_click = snapshot.key;
+  });
 
-  // console.log(markerToDelete);
-  // markerToDelete.remove();
-  // ref.remove();
+  for (var i=0; i<radios.length; i++)
+  {
+   if (radios[i].checked)
+   {
+     console.log(radios[i].value);
+     var clicks = firebase.database().ref('clicks/' + last_click).update({'capacity': radios[i].value});
+     firebase.database().ref('clicks').orderByChild('timestamp').limitToLast(1).once('child_added', function(snapshot) {
+       var newPosition = snapshot.val();
+       console.log(newPosition);
+       var point = new google.maps.LatLng(newPosition.lat, newPosition.lng);
+
+       // Add the point to the map.
+       console.log(markers.length);
+       var newMarker = new google.maps.Marker({
+           map: map,
+           position: point,
+       });
+       markers[markers.length-1].setMap(null);
+       markers.pop();
+       markers.push(newMarker);
+
+       newMarker.addListener('click', function() {
+         var capacityInfo = "Capacity: " + newPosition.capacity;
+         console.log(newPosition);
+         console.log(newPosition.capacity);
+         var contentString = '<div id="content">'+
+               '<div id="siteNotice">'+
+               '</div>'+
+               '<div id="bodyContent">'+
+               capacityInfo+
+               '<p class="marker-lat">Lat:' + newMarker.position.lat()+ '</p>'+
+               '<p class="marker-lng">Lng:' + newMarker.position.lng()+ '</p>'+
+               '<br>'+
+               '<button onClick="">Edit Rack</button>'+
+               '<button onClick="deleteMarker()">Delete Rack</button>'+
+               '</div>'+
+               '</div>';
+
+         var infowindow = new google.maps.InfoWindow({
+           content: contentString
+         });
+         infoWindows.push(infowindow);
+         infowindow.open(map, newMarker);
+       });
+     });
+    // only one radio can be logically checked, don't check the rest
+    break;
+   }
+  }
+  console.log(markers);
+  map.controls[google.maps.ControlPosition.TOP_CENTER].pop();
 }
 
 function initMap() {
@@ -114,7 +167,7 @@ function initMap() {
       }
     ],
     disableDoubleClickZoom: true,
-    streetViewControl: false
+    streetViewControl: true
   });
   // Create the DIV to hold the control and call the makeInfoBox() constructor
   // passing in this DIV.
@@ -125,23 +178,28 @@ function initMap() {
   // Create a heatmap.
   markers = [];
 
-  var centerMarkerIcon = document.createElement("IMG");
-  centerMarkerIcon.src = 'marker-icon.png';
-  var centerMarker = document.createElement('div');
-  centerMarker.append(centerMarkerIcon);
-  centerMarker.setAttribute("class", "center-marker")
-  map.getDiv().append(centerMarker);
-  console.log(map.getDiv());
+  // var centerMarkerIcon = document.createElement("IMG");
+  // centerMarkerIcon.src = 'marker-icon.png';
+  // var centerMarker = document.createElement('div');
+  // centerMarker.append(centerMarkerIcon);
+  // centerMarker.setAttribute("class", "center-marker")
+  // map.getDiv().append(centerMarker);
+  // console.log(map.getDiv());
 
   map.addListener('dblclick', function(e) {
     data.lat = e.latLng.lat();
     data.lng = e.latLng.lng();
     data.latlng = data.lat.toString() + data.lng.toString();
-    data.capacity = 5;
+    var infoBoxDiv = document.createElement('div');
+    makeInfoBox(infoBoxDiv, map);
+    map.controls[google.maps.ControlPosition.TOP_CENTER].push(infoBoxDiv);
     addToFirebase(data);
   });
 
   map.addListener('click', function(e) {
+    if (document.getElementById('capacity-input-box')) {
+      map.controls[google.maps.ControlPosition.TOP_CENTER].pop();
+    }
     for (i=0; i<infoWindows.length; i++) {
       infoWindows[i].close();
     }
@@ -177,20 +235,25 @@ function handleLocationError(browserHasGeolocation, infoWindow, pos) {
   infoWindow.setPosition(pos);
   infoWindow.setContent(browserHasGeolocation ?
                         'Error: The Geolocation service failed.' :
-                        'Error: Your browser doesn\'t support geolocation.');
+                        'Error: Your browser doesn\'t support geolocation or needs to be turned on.');
   infoWindow.open(map);
+  infoWindows.push(infoWindow);
 }
 function makeInfoBox(controlDiv, map) {
   // Set CSS for the control border.
   var controlUI = document.createElement('div');
+  controlUI.id = "capacity-input-box"
   controlUI.style.boxShadow = 'rgba(0, 0, 0, 0.298039) 0px 1px 4px -1px';
   controlUI.style.backgroundColor = '#fff';
   controlUI.style.border = '2px solid #fff';
   controlUI.style.borderRadius = '2px';
+  controlUI.style.height = '30vh';
+  controlUI.style.width = '100vw';
   controlUI.style.marginBottom = '22px';
-  controlUI.style.marginTop = '10px';
+  controlUI.style.marginTop = '0px';
   controlUI.style.textAlign = 'center';
   controlDiv.appendChild(controlUI);
+
 
   // Set CSS for the control interior.
   var controlText = document.createElement('div');
@@ -198,8 +261,46 @@ function makeInfoBox(controlDiv, map) {
   controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
   controlText.style.fontSize = '100%';
   controlText.style.padding = '6px';
-  controlText.innerText = 'The map shows all clicks made in the last 10 minutes.';
+  controlText.innerText = 'How many bikes can fit?';
   controlUI.appendChild(controlText);
+
+  // Radio button for capacity
+  var capacityInput = document.createElement("INPUT");
+  capacityInput.setAttribute("type", "radio");
+  capacityInput.setAttribute("name", "capacity");
+  capacityInput.setAttribute("value", "1-5");
+  controlUI.appendChild(capacityInput);
+  var capacityLabel = document.createElement("label");
+  capacityLabel.innerHTML = "1-5";
+  controlUI.appendChild(capacityLabel);
+  var capacityInput = document.createElement("INPUT");
+  capacityInput.setAttribute("type", "radio");
+  capacityInput.setAttribute("name", "capacity");
+  capacityInput.setAttribute("value", "6-10");
+  controlUI.appendChild(capacityInput);
+  var capacityLabel = document.createElement("label");
+  capacityLabel.innerHTML = "6-10";
+  controlUI.appendChild(capacityLabel);
+  var capacityInput = document.createElement("INPUT");
+  capacityInput.setAttribute("type", "radio");
+  capacityInput.setAttribute("name", "capacity");
+  capacityInput.setAttribute("value", "10+");
+  controlUI.appendChild(capacityInput);
+  var capacityLabel = document.createElement("label");
+  capacityLabel.innerHTML = "10+";
+  controlUI.appendChild(capacityLabel);
+
+  var cancelButton = document.createElement("BUTTON");
+  cancelButton.setAttribute("name", "Cancel");
+  cancelButton.innerText = "Cancel";
+  cancelButton.onclick = function() {map.controls[google.maps.ControlPosition.TOP_CENTER].pop(); markers[markers.length-1].setMap(null); markers.pop();};
+  controlUI.appendChild(cancelButton);
+  // Submit button
+  var submitButton = document.createElement("BUTTON");
+  submitButton.setAttribute("name", "Submit");
+  submitButton.innerText = "Submit";
+  submitButton.onclick = function() {submitCapacity();};
+  controlUI.appendChild(submitButton);
 }
 // /**
 // * Starting point for running the program. Authenticates the user.
@@ -264,36 +365,33 @@ function initFirebase(markers) {
       var point = new google.maps.LatLng(newPosition.lat, newPosition.lng);
 
       // Add the point to the map.
-      // markers.push(point);
       console.log(markers.length);
       var newMarker = new google.maps.Marker({
           map: map,
           position: point,
       });
       markers.push(newMarker);
-      console.log(newMarker.position.lat());
-      var capacityInfo = "Capacity: " + newPosition.capacity;
-      console.log(newPosition);
-      var deleteLat = newMarker.position.lat();
-      var deleteLng = newMarker.position.lng();
-      var contentString = '<div id="content">'+
-            '<div id="siteNotice">'+
-            '</div>'+
-            '<div id="bodyContent">'+
-            capacityInfo+
-            '<p class="marker-lat">Lat:' + newMarker.position.lat()+ '</p>'+
-            '<p class="marker-lng">Lng:' + newMarker.position.lng()+ '</p>'+
-            '<br>'+
-            '<button onClick="">Edit Rack</button>'+
-            '<button onClick="deleteMarker()">Delete Rack</button>'+
-            '</div>'+
-            '</div>';
-
-      var infowindow = new google.maps.InfoWindow({
-        content: contentString
-      });
 
       newMarker.addListener('click', function() {
+        var capacityInfo = "Capacity: " + newPosition.capacity;
+        console.log(newPosition);
+        console.log(newPosition.capacity);
+        var contentString = '<div id="content">'+
+              '<div id="siteNotice">'+
+              '</div>'+
+              '<div id="bodyContent">'+
+              capacityInfo+
+              '<p class="marker-lat">Lat:' + newMarker.position.lat()+ '</p>'+
+              '<p class="marker-lng">Lng:' + newMarker.position.lng()+ '</p>'+
+              '<br>'+
+              '<button onClick="">Edit Rack</button>'+
+              '<button onClick="deleteMarker()">Delete Rack</button>'+
+              '</div>'+
+              '</div>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString
+        });
         infoWindows.push(infowindow);
         infowindow.open(map, newMarker);
       });

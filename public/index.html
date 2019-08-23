@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bike Rack Map</title>
+
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/6.4.1/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/6.4.1/firebase-auth.js"></script>
+    <script defer src="/__/firebase/6.4.1/firebase-database.js"></script>
+    <script defer src="/__/firebase/6.4.1/firebase-messaging.js"></script>
+    <script defer src="/__/firebase/6.4.1/firebase-storage.js"></script>
+    <!-- initialize the SDK after all desired features are loaded -->
+    <script defer src="/__/firebase/init.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.4.1/firebase-app.js"></script>
+
+<!-- Add Firebase products that you want to use -->
+  <script src="https://www.gstatic.com/firebasejs/6.4.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/6.4.1/firebase-firestore.js"></script>
+  <link rel="stylesheet" href="./index.css">
+  </head>
+  <body>
+    <div id="map"></div>
+    <input type="checkbox" name="bike paths" id="bike-paths" value="on" checked>
+      <label for="bike-paths">Bike Paths</label>
+    <input type="checkbox" name="light rail" id="light-rail" value="on" checked>
+      <label for="light-rail">Light Rail</label>
+    <div>
+      <h4>Legend</h4>
+    </div>
+    <div class="footer">
+      <p>Created by <a href="https://github.com/CubeOfCheese" target="_blank">Billy T. Hernandez</a></p>
+    </div>
+    <script type="text/javascript" src="firebasemap.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?sensor=true&key=AIzaSyBQiAT1WJZbC1E5IVVY6NL12XF5o23J0bM&libraries=visualization&callback=initMap" async defer></script>
+  </body>
+</html>
